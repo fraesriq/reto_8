@@ -1,0 +1,58 @@
+<h1 class="text-center mt-5">Ruta Publicar</h1>
+
+<h2>Bienvenido {{email}}</h2>
+
+<form id="formPublicar">
+    titulo <input class="form-control" type="text" name="titulo" id="titulo" required>
+    contenido <input class="form-control" type="text" name="contenido" id="contenido" required>
+    foto <input class="form-control" type="file" name="foto" id="foto" required>
+    <button type="submit" class="btn btn-success mt-2">Publicar</button>
+</form>
+
+
+<script>
+
+    let formulario = document.getElementById("formPublicar");
+
+    formulario.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        //enviado publicacion
+
+        var myHeaders = new Headers();
+        let token = localStorage.getItem("jwt-key")
+        myHeaders.append("authorization", "Bearer "+ token);
+
+
+        var requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: new FormData(formulario),
+            redirect: 'follow'
+        };
+
+        fetch("http://localhost:3000/api/v1/publicar", requestOptions)
+        .then(response => {
+             if(response.status == 413){
+                throw new Error ("imagen supero el tamaño permitido.")
+            }else {
+                return response.json()
+            }
+        })
+        .then(result => {
+            if(result.code == 201){
+                console.log("ok")
+                alert(result.message);
+                formulario.reset()
+            }else {
+                console.log("no ok")
+                alert(result.message);
+            }
+        })
+        .catch(error => console.log('error', error));
+
+    
+
+    })
+
+</script>
