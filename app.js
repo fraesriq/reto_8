@@ -1,87 +1,89 @@
-const express = require('express');
-const {create} = require('express-handlebars');
-require('dotenv').config(); //LEE Y CARGA LAS VARIABLES DE ENTORNO DEL ARCHIVO .env
-const fileUpload = require('express-fileupload');
-const app = express();
+import express from 'express'
+import cors from 'cors'
+import { create } from 'express-handlebars'
+import fileUpload from 'express-fileupload';
+import 'dotenv/config';
+import { sequelize } from './db/db.js'
 
-//middlewares
-app.use(express.json());
-app.use(express.urlencoded({extended:true}));
+import * as path from 'path'
+import { fileURLToPath } from 'url'
 
-//LIMITACION DE TAMAÑO DE ARCHIVOS
+import './models/Users.model.js'
+import './models/Cars.model.js'
+
+// -------------------------------------------------
+// ------------------- RUTAS -----------------------
+// -------------------------------------------------
+
+import viewsRoutes from './routes/views.routes.js'
+import carRoutes from './routes/car.routes.js'
+import userRoutes from './routes/user.routes.js'
+import { chargeSeeds } from './seeds.js'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+const app = express()
+
+// -------------------------------------------------
+// ------------------- MIDLEWARE -------------------
+// -------------------------------------------------
+app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
+app.use(cors())
 
 app.use(fileUpload({
-    limits: { fileSize: 5 * 1024 * 1024 },
-    abortOnLimit: true,
-    responseOnLimit: "las imágenes no pueden superar los 3mb."
+	limits: { fileSize: 5 * 1024 * 1024 },
+	abortOnLimit: true,
+	responseOnLimit: "las imágenes no pueden superar los 3mb."
 }));
 
+// -------------------------------------------------
+// ------------------- SERVIDOR --------------------
+// -------------------------------------------------
+app.use(viewsRoutes)
+app.use('/api/v1', carRoutes)
+app.use('/api/v1', userRoutes)
 
-const {emisionToken, validarToken} = require('./middlewares/jwt.js');
-const {uploadFile} = require('./middlewares/upload.js');
-
-
-
-app.listen(3000, () => console.log('http://localhost:3000/'))
+// app.listen(3000, () => { console.log('Servidor en http://localhost:3000') })
+// CARPETA DE IMAGENES PUBLIC
+app.use('/imagen', express.static(__dirname + '/public/img'))
+// -------------------------------------------------
+// ------------------- HANDLEBARS-------------------
+// -------------------------------------------------
 
 const hbs = create({
-	partialsDir: [
-		'views/partials/',
-	],
-});
-
-app.engine('handlebars', hbs.engine);
-app.set('view engine', 'handlebars');
-app.set('views', __dirname+ '/views');
-
-
-//rutas de vista
-app.get("/", (req, res) => {
-    res.render("home");
+  partialsDir: [
+    'views/partials/'
+  ]
 })
 
-app.get("/login", (req, res) => {
-    res.render("login", {
-        layout: "secondary"
-    });
-})
+app.engine('handlebars', hbs.engine)
+app.set('view engine', 'handlebars')
+app.set('views', path.resolve(__dirname, './views'))
 
-app.get("/publicar", validarToken, (req, res) => {
+const main = async () => {
+  try {
+    await sequelize.authenticate()
+    
+    let force = false
 
-    res.render("publicar", {
-        email: req.usuario.email
-    });
-})
+    await sequelize.sync({
+      force,
+      alter: true,
+      logging: false
+    })
 
-app.get("/perfil", validarToken, (req, res) => {
+    if (force) {
+      console.log('carga semillas');
+      chargeSeeds();  
+    }
 
-    res.render("perfil", {
-        email: req.usuario.email
-    });
-})
+    app.listen(process.env.PORT_FRONTEND, () => { console.log('Servidor http://localhost:'+process.env.PORT_FRONTEND);})
+  } catch (error) {
+    console.log('Ha ocurrido un error',error);
+  }
+}
 
-//rutas de endpoint
-app.post("/api/v1/login", emisionToken, (req, res) => {
-    try {
-        res.status(200).json({code: 200, token: req.token})
-    } catch (error) {
-        res.status(500).json({code: 500, message: "error interno del servidor"})
-    } 
-})
+main();
 
-
-app.post("/api/v1/publicar", validarToken, uploadFile, (req, res) => {
-    try {
-        let { titulo, contenido } = req.body;
-        // nombre de imagen para guardar en DB viene en req.imagen
-        //LOGICA DE GUARDAR IMAGEN
-        res.status(201).json({code: 201, message: "Imagen guardada correctamente - nombre: " + req.imagen})
-    } catch (error) {
-        res.status(500).json({code: 500, message: "error interno del servidor"})
-    } 
-})
-
-
-
-
-
+export default app

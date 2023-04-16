@@ -1,2 +1,23 @@
 
-<h1 class="text-center mt-3">Página principal</h1>
+<h1 class="text-center mt-3">Vehiculos</h1>
+<div class="container">
+  <div class="row">
+    {{#if cars}}
+        {{#each cars}}
+        <div class="col-sm-12 col-md-4">
+          <div class="card" style="width: 18rem;">
+            <img class="card-img-top" src="/imagen/{{this.imagen}}" alt="Card image cap">
+            <div class="card-body">
+              <h5 class="card-title">{{this.marca}}</h5>
+              <p class="card-text">{{this.modelo}}</p>
+              <p class="card-text">{{this.anio}}</p>
+              <p class="card-text">{{this.propietario}}</p>
+            </div>
+          </div>
+        </div>
+        {{/each}}
+    {{else}}
+    No existen carros ingresados
+    {{/if}}
+  </div>
+</div>

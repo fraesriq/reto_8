@@ -1,11 +1,13 @@
-<h1 class="text-center mt-5">Ruta Publicar</h1>
+<h1 class="text-center mt-5">Publicar Vehiculo</h1>
 
 <h2>Bienvenido {{email}}</h2>
 
 <form id="formPublicar">
-    titulo <input class="form-control" type="text" name="titulo" id="titulo" required>
-    contenido <input class="form-control" type="text" name="contenido" id="contenido" required>
-    foto <input class="form-control" type="file" name="foto" id="foto" required>
+    Marca <input class="form-control" type="text" name="carMarca" id="carMarca" required>
+    Modelo <input class="form-control" type="text" name="carModelo" id="carModelo" required>
+    Año <input class="form-control" type="number" name="carAnio" id="carAnio" required>
+    Propietario <input class="form-control" type="text" name="carPropietario" id="carPropietario" required>
+    Imagen <input class="form-control" type="file" name="imagen" id="imagen" required>
     <button type="submit" class="btn btn-success mt-2">Publicar</button>
 </form>
 
@@ -23,7 +25,6 @@
         let token = localStorage.getItem("jwt-key")
         myHeaders.append("authorization", "Bearer "+ token);
 
-
         var requestOptions = {
             method: 'POST',
             headers: myHeaders,
@@ -31,7 +32,7 @@
             redirect: 'follow'
         };
 
-        fetch("http://localhost:3000/api/v1/publicar", requestOptions)
+        fetch("http://localhost:3000/api/v1/add_car", requestOptions)
         .then(response => {
              if(response.status == 413){
                 throw new Error ("imagen supero el tamaño permitido.")
@@ -49,9 +50,7 @@
                 alert(result.message);
             }
         })
-        .catch(error => console.log('error', error));
-
-    
+        .catch(error => console.log('error', error)); 
 
     })
 
